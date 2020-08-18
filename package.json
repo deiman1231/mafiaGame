@@ -22,5 +22,9 @@
   "homepage": "https://github.com/shanet/WebRTC-Example#readme",
   "dependencies": {
     "ws": "^3.3.3"
+  },
+  "engines": {
+    "node": "12.18.3",
+    "npm": "6.14.6"
   }
 }
