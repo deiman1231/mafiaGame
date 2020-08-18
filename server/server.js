@@ -1,5 +1,5 @@
-const HTTPS_PORT = 8443; //default port for https is 443
-const HTTP_PORT = 8001; //default port for http is 80
+const HTTPS_PORT = process.env.PORT || 8443; //default port for https is 443
+const HTTP_PORT = process.env.PORT || 8001; //default port for http is 80
 
 const fs = require('fs');
 const http = require('http');
@@ -34,7 +34,7 @@ const handleRequest = function (request, response) {
 };
 
 const httpsServer = https.createServer(serverConfig, handleRequest);
-httpsServer.listen(process.env.PORT || HTTPS_PORT);
+httpsServer.listen(HTTPS_PORT);
 
 // ----------------------------------------------------------------------------------------
 
@@ -68,4 +68,4 @@ http.createServer(function (req, res) {
     console.log(req.headers['host']+req.url);
     res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
     res.end();
-}).listen(process.env.PORT || HTTP_PORT);
+}).listen(HTTP_PORT);
