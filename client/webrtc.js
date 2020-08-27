@@ -5,6 +5,7 @@ var localDisplayName;
 var localStream;
 var serverConnection;
 var peerConnections = {}; // key is uuid, values are peer connection object and user defined display name string
+var videoConnections = {};
 
 var peerConnectionConfig = {
   'iceServers': [
@@ -43,7 +44,8 @@ function start() {
         serverConnection = new WebSocket('wss://' + window.location.hostname + ':' + WS_PORT);
         serverConnection.onmessage = gotMessageFromServer;
         serverConnection.onopen = event => {
-        serverConnection.send(JSON.stringify({ 'displayName': localDisplayName, 'uuid': localUuid, 'dest': 'all' }));
+          console.log(localUuid)
+          serverConnection.send(JSON.stringify({ 'displayName': localDisplayName, 'uuid': localUuid, 'dest': 'all' }));
         }
       }).catch(errorHandler);
 
@@ -107,21 +109,24 @@ function createdDescription(description, peerUuid) {
 }
 
 function gotRemoteStream(event, peerUuid) {
-  console.log(`got remote stream, peer ${peerUuid}`);
-  //assign stream to new HTML video element
-  var vidElement = document.createElement('video');
-  vidElement.setAttribute('autoplay', '');
-  vidElement.setAttribute('muted', '');
-  vidElement.srcObject = event.streams[0];
-
-  var vidContainer = document.createElement('div');
-  vidContainer.setAttribute('id', 'remoteVideo_' + peerUuid);
-  vidContainer.setAttribute('class', 'grid-item');
-  vidContainer.appendChild(vidElement);
-  vidContainer.appendChild(makeLabel(peerConnections[peerUuid].displayName));
-
-  document.getElementById('grid').appendChild(vidContainer);
-
+  if(!videoConnections[peerUuid]){
+    console.log(`got remote stream, peer ${peerUuid}`);
+    //assign stream to new HTML video element
+    var vidElement = document.createElement('video');
+    vidElement.setAttribute('autoplay', '');
+    vidElement.setAttribute('muted', '');
+    vidElement.srcObject = event.streams[0];
+    console.log("hahaha")
+  
+    var vidContainer = document.createElement('div');
+    vidContainer.setAttribute('id', 'remoteVideo_' + peerUuid);
+    vidContainer.setAttribute('class', 'grid-item');
+    vidContainer.appendChild(vidElement);
+    vidContainer.appendChild(makeLabel(peerConnections[peerUuid].displayName));
+  
+    document.getElementById('grid').appendChild(vidContainer);
+    videoConnections[peerUuid] = true;
+  }
 }
 
 function checkPeerDisconnect(event, peerUuid) {
@@ -129,8 +134,28 @@ function checkPeerDisconnect(event, peerUuid) {
   console.log(`connection with peer ${peerUuid} ${state}`);
   if (state === "failed" || state === "closed" || state === "disconnected") {
     delete peerConnections[peerUuid];
-    document.getElementById('videos').removeChild(document.getElementById('remoteVideo_' + peerUuid));
+    delete videoConnections[peerUuid];
+    document.getElementById('grid').removeChild(document.getElementById('remoteVideo_' + peerUuid));
   }
+}
+
+function updateLayout() {
+  // update CSS grid based on number of diplayed videos
+  var rowHeight = '98vh';
+  var colWidth = '98vw';
+
+  var numVideos = Object.keys(peerConnections).length + 1; // add one to include local video
+
+  if (numVideos > 1 && numVideos <= 4) { // 2x2 grid
+    rowHeight = '48vh';
+    colWidth = '48vw';
+  } else if (numVideos > 4) { // 3x3 grid
+    rowHeight = '32vh';
+    colWidth = '32vw';
+  }
+
+  document.documentElement.style.setProperty(`--rowHeight`, rowHeight);
+  document.documentElement.style.setProperty(`--colWidth`, colWidth);
 }
 
 function makeLabel(label) {
