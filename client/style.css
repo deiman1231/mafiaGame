@@ -1,3 +1,12 @@
+:root{
+    --colWidth: 74vw;
+    --rowHeight: 90vh;
+}
+
+.navbar{
+    min-height: 8vh;
+}
+
 .navbar .navbar-brand{
     margin: auto;
     font-size: xx-large;
@@ -16,33 +25,35 @@
 }
 
 .left {
-    left:0;
-    width:25%
+    left: 0;
+    width: 25%
 }
 
 .right {
-    right:0;
+    right: 0;
     width: 75%;
 }
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    grid-gap: 10px;
-    width: 100%;
-    height: 100%;
+    grid-gap: 5px;
+    grid-auto-flow: row; 
+    grid-template-columns: repeat(auto-fit, minmax(var(--colWidth), 1fr)) ;
 }
   
 .grid-item {
-    background-color: black;
-    margin: 3px;
-    display: inline-block;
-    font-size: 30px;
-    text-align: center;
+    position: relative;
+    overflow: hidden;  
+    min-height: var(--rowHeight);
+    min-width: var(--colWidth);
 }
-video{
-    object-fit: cover;
+
+.grid-item video{
+    position: absolute; 
+    left: 0;
+    bottom: 0;
+    height: auto;
+    width: 100%;
 }
 .col-md-2, .col-md-10{
     padding:0;

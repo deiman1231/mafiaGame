@@ -122,10 +122,10 @@ function gotRemoteStream(event, peerUuid) {
     vidContainer.setAttribute('id', 'remoteVideo_' + peerUuid);
     vidContainer.setAttribute('class', 'grid-item');
     vidContainer.appendChild(vidElement);
-    vidContainer.appendChild(makeLabel(peerConnections[peerUuid].displayName));
   
     document.getElementById('grid').appendChild(vidContainer);
     videoConnections[peerUuid] = true;
+    updateLayout();
   }
 }
 
@@ -136,22 +136,23 @@ function checkPeerDisconnect(event, peerUuid) {
     delete peerConnections[peerUuid];
     delete videoConnections[peerUuid];
     document.getElementById('grid').removeChild(document.getElementById('remoteVideo_' + peerUuid));
+    updateLayout();
   }
 }
 
 function updateLayout() {
   // update CSS grid based on number of diplayed videos
-  var rowHeight = '98vh';
-  var colWidth = '98vw';
+  var rowHeight = '90vh';
+  var colWidth = '74vw';
 
   var numVideos = Object.keys(peerConnections).length + 1; // add one to include local video
 
   if (numVideos > 1 && numVideos <= 4) { // 2x2 grid
-    rowHeight = '48vh';
-    colWidth = '48vw';
+    rowHeight = '45vh';
+    colWidth = '37vw';
   } else if (numVideos > 4) { // 3x3 grid
-    rowHeight = '32vh';
-    colWidth = '32vw';
+    rowHeight = '22vh';
+    colWidth = '18vw';
   }
 
   document.documentElement.style.setProperty(`--rowHeight`, rowHeight);
