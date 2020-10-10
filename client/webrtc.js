@@ -32,6 +32,7 @@ function start() {
   };
 
   // set up local video stream
+  console.log(navigator.mediaDevices.getUserMedia)
   if (navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices.getUserMedia(constraints)
       .then(stream => {
@@ -41,11 +42,12 @@ function start() {
 
       // set up websocket and message all existing clients
       .then(() => {
-        serverConnection = new WebSocket('wss://' + window.location.hostname + ':' + WS_PORT);
+        console.log('wss://' + window.location.hostname + ':' + WS_PORT + '/' + ROOM_ID)
+        serverConnection = new WebSocket('wss://' + window.location.hostname + ':' + WS_PORT + '/' + ROOM_ID);
         serverConnection.onmessage = gotMessageFromServer;
         serverConnection.onopen = event => {
           console.log(localUuid)
-          serverConnection.send(JSON.stringify({ 'displayName': localDisplayName, 'uuid': localUuid, 'dest': 'all' }));
+          serverConnection.send(JSON.stringify({ 'displayName': localDisplayName, 'uuid': localUuid, 'dest': 'all', 'room': ROOM_ID }));
         }
       }).catch(errorHandler);
 
@@ -59,12 +61,12 @@ function gotMessageFromServer(message) {
   var peerUuid = signal.uuid;
 
   // Ignore messages that are not for us or from ourselves
-  if (peerUuid == localUuid || (signal.dest != localUuid && signal.dest != 'all')) return;
+  if (signal.room != ROOM_ID || peerUuid == localUuid || (signal.dest != localUuid && signal.dest != 'all')) return;
 
   if (signal.displayName && signal.dest == 'all') {
     // set up peer connection object for a newcomer peer
     setUpPeer(peerUuid, signal.displayName);
-    serverConnection.send(JSON.stringify({ 'displayName': localDisplayName, 'uuid': localUuid, 'dest': peerUuid }));
+    serverConnection.send(JSON.stringify({ 'displayName': localDisplayName, 'uuid': localUuid, 'dest': peerUuid, 'room': ROOM_ID }));
 
   } else if (signal.displayName && signal.dest == localUuid) {
     // initiate call if we are the newcomer peer
@@ -97,14 +99,14 @@ function setUpPeer(peerUuid, displayName, initCall = false) {
 
 function gotIceCandidate(event, peerUuid) {
   if (event.candidate != null) {
-    serverConnection.send(JSON.stringify({ 'ice': event.candidate, 'uuid': localUuid, 'dest': peerUuid }));
+    serverConnection.send(JSON.stringify({ 'ice': event.candidate, 'uuid': localUuid, 'dest': peerUuid, 'room': ROOM_ID }));
   }
 }
 
 function createdDescription(description, peerUuid) {
   console.log(`got description, peer ${peerUuid}`);
   peerConnections[peerUuid].pc.setLocalDescription(description).then(function () {
-    serverConnection.send(JSON.stringify({ 'sdp': peerConnections[peerUuid].pc.localDescription, 'uuid': localUuid, 'dest': peerUuid }));
+    serverConnection.send(JSON.stringify({ 'sdp': peerConnections[peerUuid].pc.localDescription, 'uuid': localUuid, 'dest': peerUuid, 'room': ROOM_ID }));
   }).catch(errorHandler);
 }
 
@@ -151,8 +153,8 @@ function updateLayout() {
     rowHeight = '45vh';
     colWidth = '37vw';
   } else if (numVideos > 4) { // 3x3 grid
-    rowHeight = '22vh';
-    colWidth = '18vw';
+    rowHeight = '30vh';
+    colWidth = '24vw';
   }
 
   document.documentElement.style.setProperty(`--rowHeight`, rowHeight);

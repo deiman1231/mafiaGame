@@ -1,10 +1,14 @@
 const HTTPS_PORT = 443; //default port for https is 443
 const HTTP_PORT = 80; //default port for http is 80
 
+
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const WebSocket = require('ws');
+const { v4: uuidV4 } = require('uuid');
+const express = require('express');
+const app = express();
 // based on examples at https://www.npmjs.com/package/ws 
 const WebSocketServer = WebSocket.Server;
 
@@ -14,26 +18,24 @@ const serverConfig = {
   cert: fs.readFileSync('cert.pem'),
 };
 
+app.set('view engine', 'ejs');
+app.use(express.static('client'));
+
+app.get('/', (req, res) => {
+  res.render('index', { roomId: ''});
+})
+
+app.get('/:room', (req, res) => {
+  res.render('index', { roomId: req.params.room })
+  console.log(req.params.room)
+  start();
+})
+
 // ----------------------------------------------------------------------------------------
+const httpServer = http.createServer(app);
+const httpsServer = https.createServer(serverConfig, app);
 
-// Create a server for the client html page
-const handleRequest = function (request, response) {
-  // Render the single client html file for any request the HTTP server receives
-  console.log('request received: ' + request.url);
-
- if (request.url === '/webrtc.js') {
-    response.writeHead(200, { 'Content-Type': 'application/javascript' });
-    response.end(fs.readFileSync('client/webrtc.js'));
-  } else if (request.url === '/style.css') {
-    response.writeHead(200, { 'Content-Type': 'text/css' });
-    response.end(fs.readFileSync('client/style.css'));
-  } else {
-    response.writeHead(200, { 'Content-Type': 'text/html' });
-    response.end(fs.readFileSync('client/index.html'));
-  }
-};
-
-const httpsServer = https.createServer(serverConfig, handleRequest);
+httpServer.listen(HTTP_PORT);
 httpsServer.listen(HTTPS_PORT);
 
 // ----------------------------------------------------------------------------------------
@@ -64,8 +66,13 @@ console.log('Server running.');
 // ----------------------------------------------------------------------------------------
 
 // Separate server to redirect from http to https
-http.createServer(function (req, res) {
-    console.log(req.headers['host']+req.url);
-    res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
-    res.end();
-}).listen(HTTP_PORT);
+
+function createUUID() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+
